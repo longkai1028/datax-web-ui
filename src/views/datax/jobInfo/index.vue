@@ -14,6 +14,9 @@
       <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-edit" @click="handleCreate">
         添加
       </el-button>
+      <el-button class="filter-item" style="margin-left: 10px;" type="primary" @click="handCheck">
+        批量执行
+      </el-button>
       <!-- <el-checkbox v-model="showReviewer" class="filter-item" style="margin-left:15px;" @change="tableKey=tableKey+1">
         reviewer
       </el-checkbox> -->
@@ -27,7 +30,10 @@
       highlight-current-row
       style="width: 100%"
       size="medium"
+      @selection-change="handleSelectionChange"
     >
+      <!-- 选框增加列 -->
+      <el-table-column type="selection" width="55" />
       <el-table-column align="center" label="ID" width="80">
         <template slot-scope="scope">{{ scope.row.id }}</template>
       </el-table-column>
@@ -59,6 +65,22 @@
           />
         </template>
       </el-table-column>
+<!--      <el-table-column label="动态参数" align="center" width="100">-->
+<!--        <template slot-scope="scope">-->
+<!--          <el-popover-->
+<!--            placement="bottom"-->
+<!--            width="500"-->
+<!--            @show="loadParamById(scope.row)">-->
+<!--            <el-table :data="jobParamList">-->
+<!--              <el-table-column width="150" property="id" label="ID" />-->
+<!--              <el-table-column width="150" property="remark" label="说明" />-->
+<!--              <el-table-column width="150" property="jobParam" label="参数" />-->
+<!--              <el-table-column width="150" property="jobValue" label="参数值" />-->
+<!--            </el-table>-->
+<!--            <el-button slot="reference" size="small">查看</el-button>-->
+<!--          </el-popover>-->
+<!--        </template>-->
+<!--      </el-table-column>-->
       <el-table-column label="注册节点" align="center" width="100">
         <template slot-scope="scope">
           <el-popover
@@ -207,7 +229,7 @@
           </el-col>
           <el-col :span="12" />
         </el-row>
-        <el-row v-if="temp.glueType==='BEAN'" :gutter="20">
+        <el-row v-if="temp.glueType==='BEAN' || temp.glueType==='BEANS'" :gutter="20">
           <el-col :span="12">
             <el-form-item label="辅助参数" prop="incrementType">
               <el-select v-model="temp.incrementType" placeholder="请选择参数类型" value="">
@@ -216,7 +238,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row v-if="temp.glueType==='BEAN' && temp.incrementType === 1" :gutter="20">
+        <el-row v-if="(temp.glueType==='BEAN' || temp.glueType==='BEANS') && temp.incrementType === 1" :gutter="20">
           <el-col :span="12">
             <el-form-item label="增量主键开始ID" prop="incStartId">
               <el-input v-model="temp.incStartId" placeholder="首次增量使用" style="width: 56%" />
@@ -245,7 +267,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row v-if="temp.glueType==='BEAN' && temp.incrementType === 2" :gutter="20">
+        <el-row v-if="(temp.glueType==='BEAN'||temp.glueType==='BEANS') && temp.incrementType === 2" :gutter="20">
           <el-col :span="12">
             <el-form-item label="增量开始时间" prop="incStartTime">
               <el-date-picker
@@ -271,7 +293,7 @@
           </el-col>
 
         </el-row>
-        <el-row v-if="temp.glueType==='BEAN' && temp.incrementType === 3" :gutter="20">
+        <el-row v-if="(temp.glueType==='BEAN'||temp.glueType==='BEANS')  && temp.incrementType === 3" :gutter="20">
           <el-col :span="12">
             <el-form-item label="分区字段" prop="partitionField">
               <el-input v-model="partitionField" placeholder="请输入分区字段" style="width: 56%" />
@@ -288,7 +310,7 @@
             <el-input-number v-model="timeOffset" :min="-20" :max="0" style="width: 65%" />
           </el-col>
         </el-row>
-        <el-row v-if="temp.glueType==='BEAN'" :gutter="20">
+        <el-row v-if="(temp.glueType==='BEAN'||temp.glueType==='BEANS')" :gutter="20">
           <el-col :span="24">
             <el-form-item label="JVM启动参数">
               <el-input v-model="temp.jvmParam" placeholder="-Xms1024m -Xmx1024m -XX:+HeapDumpOnOutOfMemoryError" />
@@ -296,7 +318,7 @@
           </el-col>
         </el-row>
       </el-form>
-      <json-editor v-if="temp.glueType==='BEAN'" ref="jsonEditor" v-model="jobJson" />
+      <json-editor v-if="(temp.glueType==='BEAN'||temp.glueType==='BEANS') " ref="jsonEditor" v-model="jobJson" />
       <shell-editor v-if="temp.glueType==='GLUE_SHELL'" ref="shellEditor" v-model="glueSource" />
       <python-editor v-if="temp.glueType==='GLUE_PYTHON'" ref="pythonEditor" v-model="glueSource" />
       <powershell-editor v-if="temp.glueType==='GLUE_POWERSHELL'" ref="powershellEditor" v-model="glueSource" />
@@ -309,11 +331,112 @@
         </el-button>
       </div>
     </el-dialog>
+
+
+
+    <el-dialog :title="textMapParam[dialogStatusParam]" :visible.sync="dialogFormVisibleParam" width="1000px" :before-close="handleClose">
+      <el-form ref="dataFormParam" :rules="rulesParam" :model="tempParam" label-position="left" label-width="110px">
+<!--        <el-row :gutter="100">-->
+<!--          <el-col :span="50">-->
+<!--            <el-form-item label="开始至开始日期" prop="startEndDate">-->
+<!--        <el-date-picker-->
+<!--          v-model="tempParam.startEndDate"-->
+<!--          type="daterange"-->
+<!--          range-separator="至"-->
+<!--          start-placeholder="开始日期"-->
+<!--          end-placeholder="结束日期">-->
+<!--        </el-date-picker>-->
+<!--            </el-form-item>-->
+<!--          </el-col>-->
+<!--        </el-row>-->
+        <el-row :gutter="20">
+          <el-col :span="12">
+              <el-form-item label="机器地址" prop="addressIp">
+                <el-select v-model="tempParam.addressIp" placeholder="机器地址" class="filter-item">
+                  <el-option v-for="item in registryListParam" :key="item" :label="item" :value="item" />
+                </el-select>
+              </el-form-item>
+          </el-col>
+        </el-row>
+
+
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="orderStart" prop="orderStart">
+              <el-date-picker
+                v-model="tempParam.orderStart"
+                type="datetime"
+                placeholder="开始时间"
+                format="yyyy-MM-dd HH:mm:ss"
+                style="width: 57%"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="orderEnd" prop="orderEnd">
+              <el-date-picker
+                v-model="tempParam.orderEnd"
+                type="datetime"
+                placeholder="开始时间"
+                format="yyyy-MM-dd HH:mm:ss"
+                style="width: 57%"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+ <el-row :gutter="20">
+         <el-col :span="12">
+              <el-form-item label="orgCode" prop="orgCode">
+                <el-select v-model="tempParam.orgCode" placeholder="orgCode" class="filter-item">
+                  <el-option v-for="item in orgCodeListParam" :key="item.value" :label="item.label" :value="item.value"  :disabled="item.disabled"/>
+                </el-select>
+              </el-form-item>
+          </el-col>
+
+          <el-col :span="12">
+              <el-form-item label="version" prop="orgCode">
+                <el-select v-model="tempParam.version" placeholder="version" class="filter-item">
+                  <el-option v-for="item in versionListParam" :key="item.value" :label="item.label" :value="item.value"  :disabled="item.disabled"/>
+                </el-select>
+              </el-form-item>
+          </el-col>
+        </el-row>
+
+
+      <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="dateIndex" prop="dateIndex">
+              <el-date-picker
+                v-model="tempParam.dateIndex"
+                type="month"
+                placeholder="开始时间"
+                format="yyyyMM"
+                style="width: 57%"
+              />
+            </el-form-item>
+          </el-col>
+        
+        </el-row>
+
+      </el-form>
+
+
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogFormVisibleParam = false">
+          取消
+        </el-button>
+        <el-button type="primary" @click="createDataParam()">
+          确定
+        </el-button>
+      </div>
+    </el-dialog>
+
   </div>
 </template>
 
 <script>
 import * as executor from '@/api/datax-executor'
+import  * as jobParam from '@/api/datax-job-param'
 import * as job from '@/api/datax-job-info'
 import waves from '@/directive/waves' // waves directive
 import Cron from '@/components/Cron'
@@ -325,7 +448,7 @@ import PowershellEditor from '@/components/PowershellEditor'
 import * as datasourceApi from '@/api/datax-jdbcDatasource'
 import * as jobProjectApi from '@/api/datax-job-project'
 import { isJSON } from '@/utils/validate'
-
+import * as  format from '@/api/format'
 export default {
   name: 'JobInfo',
   components: { Pagination, JsonEditor, ShellEditor, PythonEditor, PowershellEditor, Cron },
@@ -354,6 +477,9 @@ export default {
       callback()
     }
     return {
+      // 点击按钮时符合条件的数据
+      cheeckedList: [],
+      multipleSelection: null, // 选中状态时获取已选中的数据并保存
       projectIds: '',
       list: null,
       listLoading: true,
@@ -376,6 +502,57 @@ export default {
         update: 'Edit',
         create: 'Create'
       },
+      // start
+      dialogFormVisibleParam: false,
+      textMapParam: {
+        param: 'param'
+      },
+      dialogStatusParam: '',
+      rulesParam: {
+        startTime: [{ required: true, message: 'jobGroup is required', trigger: 'change' }],
+        endTime: [{ required: true, message: 'executorBlockStrategy is required', trigger: 'change' }]
+      },
+      tempParam: {
+        id: undefined,
+        orderStart: '',
+        orderEnd: '',
+        startEndDate:'',
+        addressIp:'',
+        orgCode:'',
+         version :'',
+        dateIndex :''
+      }, orgCodeListParam: [
+        { value: '002', label: '武汉' },
+        { value: '003', label: '重庆' },
+        { value: '004', label: '合肥' ,disabled :true },
+        { value: '005', label: '浙江' },
+        { value: '006', label: '河南' },
+        { value: '007', label: '湖南' },
+        { value: '008', label: '山东' },
+        { value: '009', label: '福建' }, 
+         { value: '010', label: '山西全方锐康' },
+          { value: '011', label: '南昌' },
+           { value: '012', label: '云南' },
+         { value: '013', label: '江苏' },
+          { value: '014', label: '山西' },
+           { value: '015', label: '北京' },
+            { value: '016', label: '陕西' },
+             { value: '017', label: '四川' },
+                  { value: '019', label: '辽宁' },
+                       { value: '020', label: '杭州御元集' },
+                            { value: '021', label: '安徽芜湖' },
+                                    { value: '022', label: '吉林' },
+      ],
+      versionListParam:[
+         { value: '1', label: '1' },
+        { value: '2', label: '2' },
+      ],
+      resetTempParam() {
+        this.tempParam = this.$options.data().tempParam
+        this.orderStart = ''
+        this.orderEnd = ''
+      },
+      // end
       rules: {
         jobGroup: [{ required: true, message: 'jobGroup is required', trigger: 'change' }],
         executorRouteStrategy: [{ required: true, message: 'executorRouteStrategy is required', trigger: 'change' }],
@@ -431,7 +608,8 @@ export default {
         this.timeOffset = 0
         this.timeFormatType = 'yyyy-MM-dd'
         this.partitionField = ''
-      },
+      }
+      ,
       executorList: '',
       jobIdList: '',
       jobProjectList: '',
@@ -455,6 +633,7 @@ export default {
       ],
       glueTypes: [
         { value: 'BEAN', label: 'DataX任务' },
+        { value: 'BEANS', label: 'DataX任务-密码解密存放' },
         { value: 'GLUE_SHELL', label: 'Shell任务' },
         { value: 'GLUE_PYTHON', label: 'Python任务' },
         { value: 'GLUE_POWERSHELL', label: 'PowerShell任务' }
@@ -467,6 +646,8 @@ export default {
       ],
       triggerNextTimes: '',
       registerNode: [],
+      jobParamList:[],
+      registryListParam :[],
       jobJson: '',
       glueSource: '',
       timeOffset: 0,
@@ -489,6 +670,7 @@ export default {
         { value: 500, label: '失败' },
         { value: 502, label: '失败(超时)' },
         { value: 200, label: '成功' },
+         { value: 1, label: '执行中' },
         { value: 0, label: '无' }
       ]
     }
@@ -502,12 +684,80 @@ export default {
   },
 
   methods: {
+    handleSelectionChange(val) {
+      this.multipleSelection = val
+    },
+    //start
     handleClose(done) {
       this.$confirm('确认关闭？')
         .then(_ => {
           done()
         })
         .catch(_ => {})
+    }, createDataParam() {
+      this.$confirm('确定执行吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        const auth = []
+        for (const i in this.cheeckedList) {
+          const param = {}
+          param.jobId = this.cheeckedList[i].id;
+          param.executorParam = "";
+          auth.push(param)
+        }
+        const authParam = {}
+        authParam.orderStart = format.format(this.tempParam.orderStart,'YYYY-MM-DD HH:mm:ss');
+        authParam.orderEnd = format.format(this.tempParam.orderEnd,'YYYY-MM-DD HH:mm:ss');
+        authParam.addressIp = this.tempParam.addressIp;
+        authParam.orgCode = this.tempParam.orgCode;
+        authParam.dateIndex = format.format(this.tempParam.dateIndex,'YYYYMM');
+        authParam.version = this.tempParam.version;
+       const paramsList = {
+          paramStr:JSON.stringify(authParam),
+          jobStr:JSON.stringify(auth)
+        }
+        console.info(paramsList);
+        job.triggerListJob(paramsList).then(response => {
+          this.$notify({
+            title: 'Success',
+            message: 'Execute Successfully',
+            type: 'success',
+            duration: 2000
+          })
+        })
+      })
+    },handCheck() {
+      if (this.multipleSelection==null || this.multipleSelection=='') {
+        this.$notify({
+          title: 'Fail',
+          message: '请选择任务',
+          type: 'error',
+          duration: 2000
+        })
+        return
+      }
+      
+      this.cheeckedList = [...this.multipleSelection]
+      console.log(this.cheeckedList)
+       console.log(this.cheeckedList[0].jobGroup)
+     executor.loadById(this.cheeckedList[0].jobGroup).then(response => {
+        this.registerNode = [];
+        const { content } = response
+        this.registerNode.push(content)
+        if(response.code=='200'&&response.content!=null){
+            this.registryListParam=response.content.registryList;
+        }
+        console.info(this.registryListParam)
+      })
+
+      this.resetTempParam()
+      this.dialogStatusParam = 'param'
+      this.dialogFormVisibleParam = true
+      this.$nextTick(() => {
+        this.$refs['dataFormParam'].clearValidate()
+      })
     },
     getExecutor() {
       job.getExecutorList().then(response => {
@@ -554,8 +804,12 @@ export default {
         this.$refs['dataForm'].clearValidate()
       })
     },
+
+
+
+
     createData() {
-      if (this.temp.glueType === 'BEAN' && !isJSON(this.jobJson)) {
+      if ((this.temp.glueType === 'BEAN' || this.temp.glueType === 'BEANS') && !isJSON(this.jobJson)) {
         this.$notify({
           title: 'Fail',
           message: 'json格式错误',
@@ -631,7 +885,7 @@ export default {
     },
     updateData() {
       this.temp.jobJson = typeof (this.jobJson) !== 'string' ? JSON.stringify(this.jobJson) : this.jobJson
-      if (this.temp.glueType === 'BEAN' && !isJSON(this.temp.jobJson)) {
+      if ((this.temp.glueType === 'BEAN'||this.temp.glueType === 'BEAN') && !isJSON(this.temp.jobJson)) {
         this.$notify({
           title: 'Fail',
           message: 'json格式错误',
@@ -738,9 +992,22 @@ export default {
     },
     loadById(row) {
       executor.loadById(row.jobGroup).then(response => {
-        this.registerNode = []
+        this.registerNode = [];
         const { content } = response
         this.registerNode.push(content)
+        if(response.code=='200'&&response.content!=null){
+            this.registryListParam=response.content.registryList;
+        }
+        console.info(this.registryListParam)
+      })
+    },
+    loadParamById(row) {
+      console.info(row)
+      jobParam.loadParamById(row.id).then(response => {
+        this.jobParamList = [];
+        const { content } = response
+        this.jobParamList.push(content)
+        console.info(this.jobParamList)
       })
     }
   }

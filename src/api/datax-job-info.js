@@ -99,3 +99,11 @@ export function batchAddJob(data) {
   })
 }
 
+export function triggerListJob(data) {
+  return request({
+    url: '/api/job/triggerList',
+    method: 'post',
+    data
+  })
+}
+

@@ -136,6 +136,7 @@ export default {
         executorHandler: 'executorJobHandler',
         glueType: 'BEAN',
         jobJson: '',
+        jobJsonParam,
         executorParam: '',
         replaceParam: '',
         jvmParam: '',
@@ -165,6 +166,7 @@ export default {
         }
         if (this.active === 4) {
           this.temp.jobJson = this.configJson
+          this.temp.jobJsonParam = this.obj
           job.createJob(this.temp).then(() => {
             this.$notify({
               title: 'Success',
