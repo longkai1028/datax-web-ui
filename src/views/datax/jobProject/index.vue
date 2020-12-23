@@ -9,6 +9,9 @@
         class="filter-item"
         @keyup.enter.native="handleFilter"
       />
+     <el-select v-model="listQuery.team" placeholder="项目团队"  clearable style="width: 200px" class="filter-item">
+        <el-option v-for="item in teamTypes" :key="item.value" :label="item.label" :value="item.value" />
+      </el-select>
       <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="fetchData">
         搜索
       </el-button>
@@ -26,6 +29,9 @@
     >
       <el-table-column align="center" label="序号" width="95">
         <template slot-scope="scope">{{ scope.$index+1 }}</template>
+      </el-table-column>
+      <el-table-column label="项目团队" align="center">
+        <template slot-scope="scope">{{ scope.row.team }}</template>
       </el-table-column>
       <el-table-column label="项目名称" align="center">
         <template slot-scope="scope">{{ scope.row.name }}</template>
@@ -67,6 +73,12 @@
         <el-form-item label="项目描述" prop="description">
           <el-input v-model="temp.description" placeholder="项目描述" style="width: 40%" />
         </el-form-item>
+
+        <el-form-item label="项目团队" prop="team">
+        <el-select v-model="temp.team" placeholder="项目团队"  clearable style="width: 200px" class="filter-item">
+          <el-option v-for="item in teamTypes" :key="item.value" :label="item.label" :value="item.value" />
+        </el-select>
+        </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogFormVisible = false">
@@ -93,7 +105,7 @@
 import * as jobProjectApi from '@/api/datax-job-project'
 import waves from '@/directive/waves'
 import Pagination from '@/components/Pagination'
-
+import * as enumsApi from '@/api/datax-enums'
 export default {
   name: 'JobProject',
   components: { Pagination },
@@ -116,7 +128,8 @@ export default {
       listQuery: {
         pageNo: 1,
         pageSize: 10,
-        searchVal: ''
+        searchVal: '',
+        team:''
       },
       pluginTypeOptions: ['reader', 'writer'],
       dialogPluginVisible: false,
@@ -129,18 +142,31 @@ export default {
       },
       rules: {
         name: [{ required: true, message: 'this is required', trigger: 'blur' }],
-        description: [{ required: true, message: 'this is required', trigger: 'blur' }]
+        description: [{ required: true, message: 'this is required', trigger: 'blur' }],
+        team: [{ required: true, message: 'team is required', trigger: 'change' }]
       },
       temp: {
         id: undefined,
         name: '',
-        description: ''
+        description: '',
+        team:''
       },
+      teamTypes: [
+
+      ],
       visible: true
     }
   },
   created() {
     this.fetchData()
+    this.enumsValues()
+  },
+  enumsValues() {
+    enumsApi.charTeamList(null).then(response => {
+      if (response) {
+        this.teamTypes  = response
+      }
+    })
   },
   methods: {
     fetchData() {

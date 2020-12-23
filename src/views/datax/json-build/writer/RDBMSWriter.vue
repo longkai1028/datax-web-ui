@@ -1,6 +1,6 @@
 <template>
   <div>
-    <el-form label-position="right" label-width="150px" :model="writerForm" :rules="rules">
+    <el-form label-position="right" label-width="170px" :model="writerForm" :rules="rules">
       <el-form-item label="数据库源：" prop="datasourceId">
         <el-select
           v-model="writerForm.datasourceId"
@@ -47,8 +47,15 @@
         <!--<el-input v-model="createTableName" style="width: 195px" />
         <el-button type="primary" @click="createTable">新增</el-button>-->
       </el-form-item>
+      <el-form-item label="写入表字段：">
+        <el-input v-model="writerForm.writerTableColums" readonly="readonly" disabled="disabled" :autosize="{ minRows: 3, maxRows: 20}" type="textarea" placeholder="读取表字段" style="width: 62%" />
+      </el-form-item>
+      <el-form-item label="使用SQL进行字段排序：">
+        <el-input v-model="writerForm.writerQuerySql" :autosize="{ minRows: 3, maxRows: 20}" type="textarea" placeholder="sql查询,用于字段排序" style="width: 62%" />
+        <el-button type="primary" @click.prevent="getWriteColumns('writer')">解析字段</el-button>
+      </el-form-item>
       <div style="margin: 5px 0;" />
-      <el-form-item label="字段：">
+      <el-form-item label="字段按勾选顺序排序：">
         <el-checkbox v-model="writerForm.checkAll" :indeterminate="writerForm.isIndeterminate" @change="wHandleCheckAllChange">全选</el-checkbox>
         <div style="margin: 15px 0;" />
         <el-checkbox-group v-model="writerForm.columns" @change="wHandleCheckedChange">
@@ -86,6 +93,8 @@ export default {
       dataSource: '',
       createTableName: '',
       writerForm: {
+        writerTableColums:'',
+        writerQuerySql:'',
         datasourceId: undefined,
         tableName: '',
         columns: [],
@@ -179,6 +188,27 @@ export default {
         tableName: this.writerForm.tableName
       }
       dsQueryApi.getColumns(obj).then(response => {
+        this.fromColumnList = response
+        this.writerForm.columns = response
+        this.writerForm.writerTableColums = response
+        this.writerForm.checkAll = true
+        this.writerForm.isIndeterminate = false
+      })
+    },
+  // 获取表字段
+  getWriteColumns(type) {
+    if (type === 'writer') {
+      if (this.writerForm.writerQuerySql !== '') {
+        this.getWriterColumnsByQuerySql()
+      }
+    }
+  },
+    getWriterColumnsByQuerySql() {
+      const obj = {
+        datasourceId: this.writerForm.datasourceId,
+        querySql: this.writerForm.writerQuerySql
+      }
+      dsQueryApi.getColumnsByQuerySql(obj).then(response => {
         this.fromColumnList = response
         this.writerForm.columns = response
         this.writerForm.checkAll = true

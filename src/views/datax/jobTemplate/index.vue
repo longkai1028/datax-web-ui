@@ -5,6 +5,9 @@
       <el-select v-model="projectIds" multiple placeholder="所属项目" class="filter-item">
         <el-option v-for="item in jobProjectList" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
+      <el-select v-model="listQuery.team" placeholder="项目团队"  clearable style="width: 200px" class="filter-item">
+        <el-option v-for="item in teamTypes" :key="item.value" :label="item.label" :value="item.value" />
+      </el-select>
       <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="fetchData">
         搜索
       </el-button>
@@ -25,6 +28,9 @@
     >
       <el-table-column align="center" label="任务ID" width="80">
         <template slot-scope="scope">{{ scope.row.id }}</template>
+      </el-table-column>
+      <el-table-column label="项目团队" align="center">
+        <template slot-scope="scope">{{ scope.row.team }}</template>
       </el-table-column>
       <el-table-column label="任务描述" align="center">
         <template slot-scope="scope">{{ scope.row.jobDesc }}</template>
@@ -97,6 +103,7 @@
               </el-select>
             </el-form-item>
           </el-col>
+
           <el-col :span="12">
             <el-form-item label="任务描述" prop="jobDesc">
               <el-input v-model="temp.jobDesc" size="medium" placeholder="请输入任务描述" />
@@ -182,6 +189,13 @@
               </el-select>
             </el-form-item>
           </el-col>
+          <el-col :span="12">
+            <el-form-item label="项目团队" prop="team">
+              <el-select v-model="temp.team" placeholder="所属项目" class="filter-item">
+                <el-option v-for="item in teamTypes" :key="item.value" :label="item.label"  :value="item.value" />
+              </el-select>
+            </el-form-item>
+          </el-col>
           <el-col :span="12" />
         </el-row>
         <el-row :gutter="20">
@@ -216,6 +230,7 @@ import Pagination from '@/components/Pagination' // secondary package based on e
 import * as datasourceApi from '@/api/datax-jdbcDatasource'
 import * as jobProjectApi from '@/api/datax-job-project'
 import * as job from '@/api/datax-job-info'
+
 
 export default {
   name: 'JobTemplate',
@@ -283,7 +298,8 @@ export default {
         partitionField: [{ trigger: 'blur', validator: validatePartitionParam }],
         datasourceId: [{ trigger: 'change', validator: validateIncParam }],
         readerTable: [{ trigger: 'blur', validator: validateIncParam }],
-        projectId: [{ required: true, message: 'projectId is required', trigger: 'change' }]
+        projectId: [{ required: true, message: 'projectId is required', trigger: 'change' }],
+        team: [{ required: true, message: 'team is required', trigger: 'change' }]
       },
       temp: {
         id: undefined,
@@ -304,7 +320,8 @@ export default {
         jvmParam: '',
         projectId: '',
         datasourceId: 0,
-        readerTable: ''
+        readerTable: '',
+        team:''
       },
       resetTemp() {
         this.temp = this.$options.data().temp
@@ -312,6 +329,9 @@ export default {
       executorList: '',
       jobIdList: '',
       jobProjectList: '',
+      teamTypes: [
+
+    ] ,
       dataSourceList: '',
       blockStrategies: [
         { value: 'SERIAL_EXECUTION', label: '单机串行' },
@@ -343,6 +363,14 @@ export default {
     this.getJobIdList()
     this.getJobProject()
     this.getDataSourceList()
+    this.enumsValues()
+  },
+  enumsValues() {
+    enumsApi.charTeamList(null).then(response => {
+      if (response) {
+        this.teamTypes  = response
+      }
+    })
   },
 
   methods: {

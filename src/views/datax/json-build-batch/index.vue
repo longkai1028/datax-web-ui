@@ -41,6 +41,9 @@
             <el-table-column align="center" label="任务ID" width="80">
               <template slot-scope="scope">{{ scope.row.id }}</template>
             </el-table-column>
+            <el-table-column label="项目团队" align="center">
+              <template slot-scope="scope">{{ scope.row.team }}</template>
+            </el-table-column>
             <el-table-column label="任务描述" align="center">
               <template slot-scope="scope">{{ scope.row.jobDesc }}</template>
             </el-table-column>
@@ -136,7 +139,8 @@ export default {
         replaceParam: '',
         jvmParam: '',
         incStartTime: '',
-        templateId: 0
+        templateId: 0,
+        team:''
       }
     }
   },

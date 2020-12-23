@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <el-form label-position="right" label-width="120px" :model="readerForm" :rules="rules">
+    <el-form label-position="right" label-width="170px" :model="readerForm" :rules="rules">
       <el-form-item label="数据库源：" prop="datasourceId">
         <el-select v-model="readerForm.datasourceId" filterable style="width: 300px" @change="rDsChange">
           <el-option
@@ -26,14 +26,17 @@
           <el-option v-for="item in rTbList" :key="item" :label="item" :value="item" />
         </el-select>
       </el-form-item>
+      <el-form-item label="读取表字段：">
+        <el-input v-model="readerForm.readTableColums" readonly="readonly" disabled="disabled" :autosize="{ minRows: 3, maxRows: 20}" type="textarea" placeholder="读取表字段" style="width: 62%" />
+      </el-form-item>
       <el-form-item label="SQL语句：">
-        <el-input v-model="readerForm.querySql" :autosize="{ minRows: 3, maxRows: 20}" type="textarea" placeholder="sql查询，一般用于多表关联查询时才用" style="width: 42%" />
+        <el-input v-model="readerForm.querySql" :autosize="{ minRows: 3, maxRows: 20}" type="textarea" placeholder="sql查询，一般用于多表关联查询时才用" style="width: 62%" />
         <el-button type="primary" @click.prevent="getColumns('reader')">解析字段</el-button>
       </el-form-item>
       <el-form-item label="切分字段：">
         <el-input v-model="readerForm.splitPk" placeholder="切分主键" style="width: 13%" />
       </el-form-item>
-      <el-form-item label="表所有字段：">
+      <el-form-item label="字段按勾选顺序排序：">
         <el-checkbox
           v-model="readerForm.checkAll"
           :indeterminate="readerForm.isIndeterminate"
@@ -77,6 +80,7 @@ export default {
       customValue: '',
       dataSource: '',
       readerForm: {
+        readTableColums:'',
         datasourceId: undefined,
         tableName: '',
         columns: [],
@@ -173,6 +177,7 @@ export default {
       dsQueryApi.getColumns(obj).then(response => {
         this.rColumnList = response
         this.readerForm.columns = response
+        this.readerForm.readTableColums=response
         this.readerForm.checkAll = true
         this.readerForm.isIndeterminate = false
       })

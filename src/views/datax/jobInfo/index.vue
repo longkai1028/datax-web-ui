@@ -2,11 +2,14 @@
   <div class="app-container">
     <div class="filter-container">
       <el-input v-model="listQuery.jobDesc" placeholder="任务名称" style="width: 200px;" class="filter-item" />
-      <el-select v-model="projectIds" multiple placeholder="所属项目" class="filter-item">
+      <el-select v-model="projectIds" multiple placeholder="所属项目" clearable class="filter-item">
         <el-option v-for="item in jobProjectList" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
-      <el-select v-model="listQuery.glueType" placeholder="任务类型" style="width: 200px" class="filter-item">
-        <el-option v-for="item in glueTypes" :key="item.value" :label="item.label" :value="item.value" />
+      <el-select v-model="listQuery.team" placeholder="项目团队"  clearable style="width: 200px" class="filter-item">
+        <el-option v-for="item in teamTypes" :key="item.value" :label="item.label" :value="item.value" />
+      </el-select>
+     <el-select v-model="listQuery.jobStatus" placeholder="执行状态" clearable style="width: 200px" class="filter-item">
+        <el-option v-for="item in jobStatusList" :key="item.value" :label="item.label" :value="item.value" />
       </el-select>
       <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="fetchData">
         搜索
@@ -17,6 +20,17 @@
       <el-button class="filter-item" style="margin-left: 10px;" type="primary" @click="handCheck">
         批量执行
       </el-button>
+      <br>
+       <el-button class="filter-item" style="margin-left: 10px;display:none;" type="primary" @click="handBuild">
+        （构建数据库地址变更）重新构建
+      </el-button>
+         <el-select v-model="listQuery.glueType" placeholder="任务类型"  clearable style="width: 200px" class="filter-item">
+        <el-option v-for="item in glueTypes" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+         <el-select v-model="listQuery.buildType" placeholder="创建类型" clearable style="width: 200px" class="filter-item">
+        <el-option v-for="item in buildTypes" :key="item.value" :label="item.label" :value="item.value" />
+      </el-select>
+       
       <!-- <el-checkbox v-model="showReviewer" class="filter-item" style="margin-left:15px;" @change="tableKey=tableKey+1">
         reviewer
       </el-checkbox> -->
@@ -39,6 +53,9 @@
       </el-table-column>
       <el-table-column label="任务名称" align="center">
         <template slot-scope="scope">{{ scope.row.jobDesc }}</template>
+      </el-table-column>
+       <el-table-column label="项目团队" align="center" width="120">
+        <template slot-scope="scope">{{ scope.row.team }}</template>
       </el-table-column>
       <el-table-column label="所属项目" align="center" width="120">
         <template slot-scope="scope">{{ scope.row.projectName }}</template>
@@ -112,6 +129,9 @@
       <el-table-column label="执行状态" align="center" width="80">
         <template slot-scope="scope"> {{ statusList.find(t => t.value === scope.row.lastHandleCode).label }}</template>
       </el-table-column>
+      <el-table-column label="Job状态" align="center" width="80">
+        <template slot-scope="scope"> {{ jobStatusList.find(t => t.value === scope.row.jobStatus).label }}</template>
+      </el-table-column>
       <el-table-column label="操作" align="center" fixed="right">
         <template slot-scope="{row}">
           <!-- <el-dropdown type="primary" size="small"> -->
@@ -137,7 +157,7 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="执行器" prop="jobGroup">
-              <el-select v-model="temp.jobGroup" placeholder="请选择执行器">
+              <el-select v-model="temp.jobGroup"  placeholder="请选择执行器">
                 <el-option v-for="item in executorList" :key="item.id" :label="item.title" :value="item.id" />
               </el-select>
             </el-form-item>
@@ -224,6 +244,14 @@
             <el-form-item label="子任务">
               <el-select v-model="temp.childJobId" multiple placeholder="子任务" value-key="id">
                 <el-option v-for="item in jobIdList" :key="item.id" :label="item.jobDesc" :value="item" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12" />
+          <el-col :span="12">
+            <el-form-item label="项目团队" prop="description">
+              <el-select v-model="temp.team" placeholder="项目团队"  clearable style="width: 200px" class="filter-item">
+                <el-option v-for="item in teamTypes" :key="item.value" :label="item.label" :value="item.value" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -335,7 +363,7 @@
 
 
     <el-dialog :title="textMapParam[dialogStatusParam]" :visible.sync="dialogFormVisibleParam" width="1000px" :before-close="handleClose">
-      <el-form ref="dataFormParam" :rules="rulesParam" :model="tempParam" label-position="left" label-width="110px">
+      <el-form ref="dataFormParam" :rules="rulesParam" :model="tempParam" label-position="left" label-width="145px">
 <!--        <el-row :gutter="100">-->
 <!--          <el-col :span="50">-->
 <!--            <el-form-item label="开始至开始日期" prop="startEndDate">-->
@@ -352,7 +380,7 @@
         <el-row :gutter="20">
           <el-col :span="12">
               <el-form-item label="机器地址" prop="addressIp">
-                <el-select v-model="tempParam.addressIp" placeholder="机器地址" class="filter-item">
+                <el-select v-model="tempParam.addressIp" placeholder="机器地址" clearable class="filter-item">
                   <el-option v-for="item in registryListParam" :key="item" :label="item" :value="item" />
                 </el-select>
               </el-form-item>
@@ -384,38 +412,99 @@
             </el-form-item>
           </el-col>
         </el-row>
- <el-row :gutter="20">
+        <el-row :gutter="20">
          <el-col :span="12">
               <el-form-item label="orgCode" prop="orgCode">
-                <el-select v-model="tempParam.orgCode" placeholder="orgCode" class="filter-item">
+                <el-select v-model="tempParam.orgCode" placeholder="orgCode" clearable class="filter-item">
                   <el-option v-for="item in orgCodeListParam" :key="item.value" :label="item.label" :value="item.value"  :disabled="item.disabled"/>
                 </el-select>
               </el-form-item>
           </el-col>
 
           <el-col :span="12">
-              <el-form-item label="version" prop="orgCode">
-                <el-select v-model="tempParam.version" placeholder="version" class="filter-item">
+              <el-form-item label="version" prop="version" >
+                <el-select v-model="tempParam.version" placeholder="version" clearable class="filter-item">
                   <el-option v-for="item in versionListParam" :key="item.value" :label="item.label" :value="item.value"  :disabled="item.disabled"/>
                 </el-select>
               </el-form-item>
           </el-col>
         </el-row>
 
-
+<!--        <el-row :gutter="100">-->
+<!--          <el-col :span="50">-->
       <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="dateIndex" prop="dateIndex">
               <el-date-picker
                 v-model="tempParam.dateIndex"
                 type="month"
-                placeholder="开始时间"
+                placeholder="dateIndex"
                 format="yyyyMM"
-                style="width: 57%"
               />
             </el-form-item>
           </el-col>
-        
+        </el-row>
+
+
+
+
+      <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="orgCodeList" prop="orgCodeList">
+                <el-select v-model="tempParam.orgCodeList" placeholder="调用in (${orgCodeList})" clearable multiple class="filter-item">
+                  <el-option v-for="item in orgCodeListParam" :key="item.value" :label="item.label" :value="item.value"  :disabled="item.disabled"/>
+                </el-select>
+              </el-form-item>
+          </el-col>
+
+         <el-col :span="12">
+              <el-form-item label="versionList" prop="versionList"  >
+                <el-select v-model="tempParam.versionList" placeholder="调用in (${versionList})" clearable multiple class="filter-item">
+                  <el-option v-for="item in versionListParam" :key="item.value" :label="item.label" :value="item.value"  :disabled="item.disabled"/>
+                </el-select>
+              </el-form-item>
+          </el-col>
+
+
+        </el-row>
+
+
+  <el-row >
+    <el-col  >
+          <el-form-item label="betweenDateIndex" prop="betweenDateIndex"  >
+      <span style="position: absolute;top: -20px;left: 45px;    font-size: 14px; " >startDateIndex至endDateIndex</span>
+                  <el-date-picker  style="top:10px;"
+                      v-model="tempParam.betweenDateIndex"
+                      type="monthrange"
+                      align="left"
+                      size="medium"
+                      unlink-panels
+                      start-placeholder="startDateIndex"
+                      start-placeholder-color="#00A854"
+                      end-placeholder="endDateIndex"
+                      format="yyyyMM"
+                     >
+                    </el-date-picker>
+          </el-form-item>
+        </el-col>
+  </el-row>
+
+    <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="wmsOrgCodeList" prop="wmsOrgCodeList">
+                <el-select v-model="tempParam.wmsOrgCodeList" placeholder="调用in (${wmsOrgCodeList})" clearable multiple class="filter-item">
+                  <el-option v-for="item in wmsOrgCodeListParam" :key="item.value" :label="item.label" :value="item.value"  :disabled="item.disabled"/>
+                </el-select>
+              </el-form-item>
+          </el-col>
+          <el-col :span="12">
+              <el-form-item label="wmsOrgCode" prop="wmsOrgCode">
+                <el-select v-model="tempParam.wmsOrgCode" placeholder="wmsOrgCode" clearable class="filter-item">
+                  <el-option v-for="item in wmsOrgCodeListParam" :key="item.value" :label="item.label" :value="item.value"  :disabled="item.disabled"/>
+                </el-select>
+              </el-form-item>
+          </el-col>
+
         </el-row>
 
       </el-form>
@@ -438,6 +527,7 @@
 import * as executor from '@/api/datax-executor'
 import  * as jobParam from '@/api/datax-job-param'
 import * as job from '@/api/datax-job-info'
+import * as enumsApi from '@/api/datax-enums'
 import waves from '@/directive/waves' // waves directive
 import Cron from '@/components/Cron'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
@@ -491,7 +581,9 @@ export default {
         projectIds: '',
         triggerStatus: -1,
         jobDesc: '',
-        glueType: ''
+        glueType: '',
+        buildType:'',
+        jobStatus:''
       },
       showCronBox: false,
       dialogPluginVisible: false,
@@ -520,32 +612,17 @@ export default {
         addressIp:'',
         orgCode:'',
          version :'',
-        dateIndex :''
+         versionList:'',
+        dateIndex :'',
+        orgCodeList:'',
+        betweenDateIndex:'',
+        wmsOrgCode:'',
+        wmsOrgCodeList:''
       }, orgCodeListParam: [
-        { value: '002', label: '武汉' },
-        { value: '003', label: '重庆' },
-        { value: '004', label: '合肥' ,disabled :true },
-        { value: '005', label: '浙江' },
-        { value: '006', label: '河南' },
-        { value: '007', label: '湖南' },
-        { value: '008', label: '山东' },
-        { value: '009', label: '福建' }, 
-         { value: '010', label: '山西全方锐康' },
-          { value: '011', label: '南昌' },
-           { value: '012', label: '云南' },
-         { value: '013', label: '江苏' },
-          { value: '014', label: '山西' },
-           { value: '015', label: '北京' },
-            { value: '016', label: '陕西' },
-             { value: '017', label: '四川' },
-                  { value: '019', label: '辽宁' },
-                       { value: '020', label: '杭州御元集' },
-                            { value: '021', label: '安徽芜湖' },
-                                    { value: '022', label: '吉林' },
-      ],
+     
+      ],wmsOrgCodeListParam:[],
       versionListParam:[
-         { value: '1', label: '1' },
-        { value: '2', label: '2' },
+       
       ],
       resetTempParam() {
         this.tempParam = this.$options.data().tempParam
@@ -571,6 +648,7 @@ export default {
         datasourceId: [{ trigger: 'change', validator: validateIncParam }],
         readerTable: [{ trigger: 'blur', validator: validateIncParam }]
       },
+      buildType:'1',
       temp: {
         id: undefined,
         jobGroup: '',
@@ -599,7 +677,9 @@ export default {
         primaryKey: '',
         projectId: '',
         datasourceId: '',
-        readerTable: ''
+        readerTable: '',
+        buildType:'0',
+        team:''
       },
       resetTemp() {
         this.temp = this.$options.data().temp
@@ -613,6 +693,9 @@ export default {
       executorList: '',
       jobIdList: '',
       jobProjectList: '',
+      teamTypes: [
+     
+    ]     ,
       dataSourceList: '',
       blockStrategies: [
         { value: 'SERIAL_EXECUTION', label: '单机串行' },
@@ -637,6 +720,9 @@ export default {
         { value: 'GLUE_SHELL', label: 'Shell任务' },
         { value: 'GLUE_PYTHON', label: 'Python任务' },
         { value: 'GLUE_POWERSHELL', label: 'PowerShell任务' }
+      ],buildTypes:[
+ { value: '0', label: '任务构建' },
+        { value: '1', label: '手动添加' },
       ],
       incrementTypes: [
         { value: 0, label: '无' },
@@ -670,8 +756,11 @@ export default {
         { value: 500, label: '失败' },
         { value: 502, label: '失败(超时)' },
         { value: 200, label: '成功' },
-         { value: 1, label: '执行中' },
+        { value: 908, label: '执行异常' },
         { value: 0, label: '无' }
+      ],
+      jobStatusList: [
+        
       ]
     }
   },
@@ -681,6 +770,7 @@ export default {
     this.getJobIdList()
     this.getJobProject()
     this.getDataSourceList()
+    this.enumsValues()
   },
 
   methods: {
@@ -714,6 +804,15 @@ export default {
         authParam.orgCode = this.tempParam.orgCode;
         authParam.dateIndex = format.format(this.tempParam.dateIndex,'YYYYMM');
         authParam.version = this.tempParam.version;
+         authParam.orgCodeList = this.tempParam.orgCodeList;
+         authParam.versionList = this.tempParam.versionList;
+        authParam.wmsOrgCode = this.tempParam.wmsOrgCode;
+         authParam.wmsOrgCodeList = this.tempParam.wmsOrgCodeList;
+         
+         if(this.tempParam.betweenDateIndex!=null){
+          authParam.startDateIndex = format.format(this.tempParam.betweenDateIndex[0],'YYYYMM');
+         authParam.endDateIndex =format.format(this.tempParam.betweenDateIndex[1],'YYYYMM');
+         }
        const paramsList = {
           paramStr:JSON.stringify(authParam),
           jobStr:JSON.stringify(auth)
@@ -728,7 +827,41 @@ export default {
           })
         })
       })
-    },handCheck() {
+    },handBuild(){
+       if (this.multipleSelection==null || this.multipleSelection=='') {
+        this.$notify({
+          title: 'Fail',
+          message: '请选择任务',
+          type: 'error',
+          duration: 2000
+        })
+        return
+      }
+       this.cheeckedList = [...this.multipleSelection]
+
+        const auth = []
+        for (const i in this.cheeckedList) {
+          const param = {}
+          param.jobId = this.cheeckedList[i].id;
+          param.executorParam = "";
+          auth.push(param)
+        }
+       const paramsList = {
+          jobStr:JSON.stringify(auth)
+        }
+        console.info(paramsList);
+        job.triggerListBuild(paramsList).then(response => {
+          this.$notify({
+            title: 'Success',
+            message: 'Execute Successfully',
+            type: 'success',
+            duration: 2000
+          })
+        })
+
+
+    }
+    ,handCheck() {
       if (this.multipleSelection==null || this.multipleSelection=='') {
         this.$notify({
           title: 'Fail',
@@ -738,7 +871,7 @@ export default {
         })
         return
       }
-      
+
       this.cheeckedList = [...this.multipleSelection]
       console.log(this.cheeckedList)
        console.log(this.cheeckedList[0].jobGroup)
@@ -751,6 +884,9 @@ export default {
         }
         console.info(this.registryListParam)
       })
+
+
+
 
       this.resetTempParam()
       this.dialogStatusParam = 'param'
@@ -804,7 +940,36 @@ export default {
         this.$refs['dataForm'].clearValidate()
       })
     },
+    enumsValues() {
+        enumsApi.charWmsOrgList(null).then(response => {
+          if (response) {
+            this.wmsOrgCodeListParam= response
+          }
+        })
+        enumsApi.charErpOrgList(null).then(response => {
+          if (response) {
+            this.orgCodeListParam  = response
+          }
+        })
+         enumsApi.charTeamList(null).then(response => {
+          if (response) {
+            this.teamTypes  = response
+          }
+        })
+        enumsApi.charVersionList(null).then(response => {
+          if (response) {
+            this.versionListParam  = response
+          }
+        })
 
+        enumsApi.charJobStatusList(null).then(response => {
+          if (response) {
+            this.jobStatusList  = response
+          }
+        })
+        
+        
+    },
 
 
 
@@ -827,6 +992,7 @@ export default {
             }
             this.temp.childJobId = auth.toString()
           }
+          this.temp.buildType = 1
           this.temp.jobJson = this.jobJson
           this.temp.glueSource = this.glueSource
           this.temp.executorHandler = this.temp.glueType === 'BEAN' ? 'executorJobHandler' : ''

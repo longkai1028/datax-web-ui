@@ -107,3 +107,11 @@ export function triggerListJob(data) {
   })
 }
 
+
+export function triggerListBuild(data) {
+  return request({
+    url: '/api/job/triggerListBuild',
+    method: 'post',
+    data
+  })
+}

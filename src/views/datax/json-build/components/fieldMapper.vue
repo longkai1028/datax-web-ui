@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
-    <el-form label-position="left" label-width="80px" :model="readerForm">
-      <el-form-item label="源端字段">
+    <el-form label-position="left" label-width="220px" :model="readerForm">
+      <el-form-item label="源端字段(字段按勾选顺序排序):">
         <el-checkbox
           v-model="readerForm.lcheckAll"
           :indeterminate="readerForm.isIndeterminate"
@@ -12,7 +12,7 @@
           <el-checkbox v-for="c in fromColumnsList" :key="c" :label="c">{{ c }}</el-checkbox>
         </el-checkbox-group>
       </el-form-item>
-      <el-form-item label="目标字段">
+      <el-form-item label="目标字段(字段按勾选顺序排序):">
         <el-checkbox
           v-model="readerForm.rcheckAll"
           :indeterminate="readerForm.isIndeterminate"

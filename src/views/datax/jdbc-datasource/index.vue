@@ -9,6 +9,9 @@
         class="filter-item"
         @keyup.enter.native="handleFilter"
       />
+      <el-select v-model="listQuery.datasourceGroup" placeholder="项目分组"  clearable style="width: 200px" class="filter-item">
+        <el-option v-for="item in teamTypes" :key="item.value" :label="item.label" :value="item.value" />
+      </el-select>
       <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="fetchData">
         搜索
       </el-button>
@@ -92,9 +95,13 @@
         <el-form-item label="数据源名称" prop="datasourceName">
           <el-input v-model="temp.datasourceName" placeholder="数据源名称" style="width: 40%" />
         </el-form-item>
-        <el-form-item label="数据源分组" prop="datasourceGroup">
-          <el-input v-model="temp.datasourceGroup" placeholder="数据源分组" style="width: 40%" />
-        </el-form-item>
+
+          <el-form-item label="数据源分组" prop="datasourceGroup">
+            <el-select v-model="temp.datasourceGroup" placeholder="所属项目" class="filter-item">
+              <el-option v-for="item in teamTypes" :key="item.value" :label="item.label"  :value="item.value" />
+            </el-select>
+          </el-form-item>
+
         <el-form-item v-if="jdbc" label="用户名">
           <el-input v-model="temp.jdbcUsername" placeholder="用户名" style="width: 40%" />
         </el-form-item>
@@ -172,6 +179,7 @@
 <script>
 import * as datasourceApi from '@/api/datax-jdbcDatasource'
 import waves from '@/directive/waves' // waves directive
+import * as enumsApi from '@/api/datax-enums'
 import { parseTime } from '@/utils'
 import Pagination from '@/components/Pagination'
 
@@ -196,8 +204,11 @@ export default {
       total: 0,
       listQuery: {
         current: 1,
-        size: 10
-      },
+        size: 10,
+        team:''
+      },teamTypes: [
+
+      ] ,
       pluginTypeOptions: ['reader', 'writer'],
       dialogPluginVisible: false,
       pluginData: [],
@@ -220,7 +231,7 @@ export default {
       temp: {
         id: undefined,
         datasourceName: '',
-        datasourceGroup: 'Default',
+        datasourceGroup: 'ERP',
         jdbcUsername: '',
         jdbcPassword: '',
         jdbcUrl: '',
@@ -248,6 +259,17 @@ export default {
   },
   created() {
     this.fetchData()
+    this.enumsValues()
+
+  },
+  enumsValues() {
+
+    enumsApi.charTeamList(null).then(response => {
+      if (response) {
+        this.teamTypes  = response
+      }
+    })
+
   },
   methods: {
     selectDataSource(datasource) {
@@ -288,7 +310,7 @@ export default {
       this.temp = {
         id: undefined,
         datasourceName: '',
-        datasourceGroup: 'Default',
+        datasourceGroup: 'ERP',
         jdbcUsername: '',
         jdbcPassword: '',
         jdbcUrl: '',

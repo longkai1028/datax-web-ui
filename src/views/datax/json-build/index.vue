@@ -2,9 +2,9 @@
   <div class="app-container">
     <div class="build-container">
       <el-steps :active="active" finish-status="success">
-        <el-step title="步骤 1" description="构建reader">1</el-step>
-        <el-step title="步骤 2" description="构建writer">2</el-step>
-        <el-step title="步骤 3" description="字段映射">3</el-step>
+        <el-step title="步骤 1" description="构建reader（字段按勾选顺序排序）">1</el-step>
+        <el-step title="步骤 2" description="构建writer（字段按勾选顺序排序）">2</el-step>
+        <el-step title="步骤 3" description="字段映射（字段按勾选顺序排序）">3</el-step>
         <el-step title="步骤 4" description="构建">4</el-step>
       </el-steps>
 
@@ -41,6 +41,9 @@
           >
             <el-table-column align="center" label="任务ID" width="80">
               <template slot-scope="scope">{{ scope.row.id }}</template>
+            </el-table-column>
+            <el-table-column label="项目团队" align="center">
+              <template slot-scope="scope">{{ scope.row.team }}</template>
             </el-table-column>
             <el-table-column label="任务描述" align="center">
               <template slot-scope="scope">{{ scope.row.jobDesc }}</template>
@@ -120,6 +123,8 @@ export default {
       triggerNextTimes: '',
       registerNode: [],
       jobJson: '',
+      jobJsonParam:'',
+       jobJsonParamBuild:'',
       temp: {
         id: undefined,
         jobGroup: '',
@@ -136,11 +141,12 @@ export default {
         executorHandler: 'executorJobHandler',
         glueType: 'BEAN',
         jobJson: '',
-        jobJsonParam,
         executorParam: '',
         replaceParam: '',
         jvmParam: '',
-        incStartTime: ''
+        incStartTime: '',
+         jobJsonParam :'',
+        team:''
       }
     }
   },
@@ -166,7 +172,7 @@ export default {
         }
         if (this.active === 4) {
           this.temp.jobJson = this.configJson
-          this.temp.jobJsonParam = this.obj
+          this.temp.jobJsonParam = this.jobJsonParamBuild;
           job.createJob(this.temp).then(() => {
             this.$notify({
               title: 'Success',
@@ -248,6 +254,7 @@ export default {
         mongoDBReader: mongoDBReader,
         mongoDBWriter: mongoDBWriter
       }
+      this.jobJsonParamBuild=obj;
       // 调api
       dataxJsonApi.buildJobJson(obj).then(response => {
         this.configJson = JSON.parse(response)
