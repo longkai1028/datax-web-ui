@@ -161,13 +161,6 @@ export default {
     this.fetchData()
     this.enumsValues()
   },
-  enumsValues() {
-    enumsApi.charTeamList(null).then(response => {
-      if (response) {
-        this.teamTypes  = response
-      }
-    })
-  },
   methods: {
     fetchData() {
       this.listLoading = true
@@ -178,6 +171,16 @@ export default {
         this.list = records
         this.listLoading = false
       })
+    },
+    enumsValues() {
+
+      enumsApi.charTeamList(null).then(response => {
+        if (response) {
+          this.teamTypes  = response
+        }
+      })
+
+
     },
     resetTemp() {
       this.temp = {

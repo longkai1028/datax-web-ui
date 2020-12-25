@@ -190,7 +190,9 @@ export default {
       dsQueryApi.getColumns(obj).then(response => {
         this.fromColumnList = response
         this.writerForm.columns = response
-        this.writerForm.writerTableColums = response
+        if(response!=null){
+          this.writerForm.writerTableColums=response.join(", ")
+        }
         this.writerForm.checkAll = true
         this.writerForm.isIndeterminate = false
       })

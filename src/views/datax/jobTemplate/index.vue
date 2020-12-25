@@ -190,7 +190,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="项目团队" prop="team">
+            <el-form-item label="team" >
               <el-select v-model="temp.team" placeholder="所属项目" class="filter-item">
                 <el-option v-for="item in teamTypes" :key="item.value" :label="item.label"  :value="item.value" />
               </el-select>
@@ -222,6 +222,7 @@
 </template>
 
 <script>
+import * as enumsApi from '@/api/datax-enums'
 import * as executor from '@/api/datax-executor'
 import Cron from '@/components/Cron'
 import * as jobTemp from '@/api/datax-job-template'
@@ -365,13 +366,6 @@ export default {
     this.getDataSourceList()
     this.enumsValues()
   },
-  enumsValues() {
-    enumsApi.charTeamList(null).then(response => {
-      if (response) {
-        this.teamTypes  = response
-      }
-    })
-  },
 
   methods: {
     handleClose(done) {
@@ -380,6 +374,13 @@ export default {
           done()
         })
         .catch(_ => {})
+    },
+    enumsValues() {
+      enumsApi.charTeamList(null).then(response => {
+        if (response) {
+          this.teamTypes  = response
+        }
+      })
     },
     getExecutor() {
       jobTemp.getExecutorList().then(response => {

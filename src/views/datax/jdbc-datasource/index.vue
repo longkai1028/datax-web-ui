@@ -262,15 +262,6 @@ export default {
     this.enumsValues()
 
   },
-  enumsValues() {
-
-    enumsApi.charTeamList(null).then(response => {
-      if (response) {
-        this.teamTypes  = response
-      }
-    })
-
-  },
   methods: {
     selectDataSource(datasource) {
       if (datasource === 'mysql') {
@@ -295,6 +286,15 @@ export default {
         this.jdbc = true
       }
       this.getShowStrategy(datasource)
+    },
+    enumsValues() {
+
+      enumsApi.charTeamList(null).then(response => {
+        if (response) {
+          this.teamTypes  = response
+        }
+      })
+
     },
     fetchData() {
       this.listLoading = true

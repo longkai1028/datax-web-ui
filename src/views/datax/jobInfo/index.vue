@@ -11,6 +11,7 @@
      <el-select v-model="listQuery.jobStatus" placeholder="执行状态" clearable style="width: 200px" class="filter-item">
         <el-option v-for="item in jobStatusList" :key="item.value" :label="item.label" :value="item.value" />
       </el-select>
+      <el-input v-model="listQuery.userName" placeholder="创建人" style="width: 200px;" class="filter-item" />
       <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="fetchData">
         搜索
       </el-button>
@@ -30,7 +31,7 @@
          <el-select v-model="listQuery.buildType" placeholder="创建类型" clearable style="width: 200px" class="filter-item">
         <el-option v-for="item in buildTypes" :key="item.value" :label="item.label" :value="item.value" />
       </el-select>
-       
+
       <!-- <el-checkbox v-model="showReviewer" class="filter-item" style="margin-left:15px;" @change="tableKey=tableKey+1">
         reviewer
       </el-checkbox> -->
@@ -54,9 +55,15 @@
       <el-table-column label="任务名称" align="center">
         <template slot-scope="scope">{{ scope.row.jobDesc }}</template>
       </el-table-column>
-       <el-table-column label="项目团队" align="center" width="120">
+
+      <el-table-column label="团队" align="center" width="120">
         <template slot-scope="scope">{{ scope.row.team }}</template>
       </el-table-column>
+
+      <el-table-column align="center" label="创建人" width="80">
+        <template slot-scope="scope">{{ scope.row.userName }}</template>
+      </el-table-column>
+
       <el-table-column label="所属项目" align="center" width="120">
         <template slot-scope="scope">{{ scope.row.projectName }}</template>
       </el-table-column>
@@ -67,6 +74,9 @@
       </el-table-column>
       <el-table-column label="路由策略" align="center" width="130">
         <template slot-scope="scope"> {{ routeStrategies.find(t => t.value === scope.row.executorRouteStrategy).label }}</template>
+      </el-table-column>
+      <el-table-column label="Job状态" align="center" width="80">
+        <template slot-scope="scope"> {{ scope.row.jobStatus }}</template>
       </el-table-column>
       <el-table-column label="状态" align="center" width="150">
         <template slot-scope="scope">
@@ -128,9 +138,6 @@
       </el-table-column>
       <el-table-column label="执行状态" align="center" width="80">
         <template slot-scope="scope"> {{ statusList.find(t => t.value === scope.row.lastHandleCode).label }}</template>
-      </el-table-column>
-      <el-table-column label="Job状态" align="center" width="80">
-        <template slot-scope="scope"> {{ jobStatusList.find(t => t.value === scope.row.jobStatus).label }}</template>
       </el-table-column>
       <el-table-column label="操作" align="center" fixed="right">
         <template slot-scope="{row}">
@@ -249,7 +256,7 @@
           </el-col>
           <el-col :span="12" />
           <el-col :span="12">
-            <el-form-item label="项目团队" prop="description">
+            <el-form-item label="项目团队" prop="team">
               <el-select v-model="temp.team" placeholder="项目团队"  clearable style="width: 200px" class="filter-item">
                 <el-option v-for="item in teamTypes" :key="item.value" :label="item.label" :value="item.value" />
               </el-select>
@@ -583,7 +590,8 @@ export default {
         jobDesc: '',
         glueType: '',
         buildType:'',
-        jobStatus:''
+        jobStatus:'',
+        userName:''
       },
       showCronBox: false,
       dialogPluginVisible: false,
@@ -619,10 +627,10 @@ export default {
         wmsOrgCode:'',
         wmsOrgCodeList:''
       }, orgCodeListParam: [
-     
+
       ],wmsOrgCodeListParam:[],
       versionListParam:[
-       
+
       ],
       resetTempParam() {
         this.tempParam = this.$options.data().tempParam
@@ -646,7 +654,9 @@ export default {
         replaceParamType: [{ trigger: 'change', validator: validateIncParam }],
         partitionField: [{ trigger: 'blur', validator: validatePartitionParam }],
         datasourceId: [{ trigger: 'change', validator: validateIncParam }],
-        readerTable: [{ trigger: 'blur', validator: validateIncParam }]
+        readerTable: [{ trigger: 'blur', validator: validateIncParam }],
+        team: [{ required: true, message: 'team is required', trigger: 'change' }]
+
       },
       buildType:'1',
       temp: {
@@ -694,7 +704,7 @@ export default {
       jobIdList: '',
       jobProjectList: '',
       teamTypes: [
-     
+
     ]     ,
       dataSourceList: '',
       blockStrategies: [
@@ -760,7 +770,7 @@ export default {
         { value: 0, label: '无' }
       ],
       jobStatusList: [
-        
+
       ]
     }
   },
@@ -808,7 +818,7 @@ export default {
          authParam.versionList = this.tempParam.versionList;
         authParam.wmsOrgCode = this.tempParam.wmsOrgCode;
          authParam.wmsOrgCodeList = this.tempParam.wmsOrgCodeList;
-         
+
          if(this.tempParam.betweenDateIndex!=null){
           authParam.startDateIndex = format.format(this.tempParam.betweenDateIndex[0],'YYYYMM');
          authParam.endDateIndex =format.format(this.tempParam.betweenDateIndex[1],'YYYYMM');
@@ -967,8 +977,8 @@ export default {
             this.jobStatusList  = response
           }
         })
-        
-        
+
+
     },
 
 

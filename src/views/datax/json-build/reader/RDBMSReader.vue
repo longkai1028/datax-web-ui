@@ -177,7 +177,9 @@ export default {
       dsQueryApi.getColumns(obj).then(response => {
         this.rColumnList = response
         this.readerForm.columns = response
-        this.readerForm.readTableColums=response
+        if(response!=null){
+          this.readerForm.readTableColums=response.join(", ")
+        }
         this.readerForm.checkAll = true
         this.readerForm.isIndeterminate = false
       })
